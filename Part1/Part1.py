@@ -27,28 +27,44 @@ def narrowband_noise(N, p_mains, fs):
     return A * np.cos(2 * np.pi * 50 * t + phi)
 
 # Add noise to ECG
-def add_noise(signal, fs, types=("white", "baseline", "narrowband"), factors=(0.01, 0.01, 0.01)):
+def add_noise(signal, fs, snr_db, types=("white", "baseline", "narrowband")):
     N = len(signal)
     noise = np.zeros(N)
-    p = 0
 
     p_signal = np.mean(signal**2)
-
-    if len(types) != len(factors):
-        raise ValueError("Length of types and powers must be the same.")
+    p_noise = p_signal / (10**(snr_db / 10))
+    p_each = p_noise / len(types)
 
     for t in types:
         if t == "white":
-            noise += white_noise(N, factors[p] * p_signal  )
+            noise += white_noise(N, p_each)
         elif t == "baseline":
-            noise += baseline_drift_noise(N, factors[p] * p_signal, fs)
+            noise += baseline_drift_noise(N, p_each, fs)
         elif t == "narrowband":
-            noise += narrowband_noise(N, factors[p] * p_signal, fs)
+            noise += narrowband_noise(N, p_each, fs)
         else:
            raise ValueError(f"Unknown noise type: {t}")
-        p += 1 
+
+    p_noise_actual = np.mean(noise**2)
+    noise *= np.sqrt(p_noise / p_noise_actual)
 
     return signal + noise
+
+def evaluate_detection(true_times, detected_times, tolerance_ms=10):
+    tolerance_s = tolerance_ms / 1000
+    true_hits = 0
+    false_hits = 0
+    
+    for d in detected_times:
+        if np.any(np.abs(true_times - d) < tolerance_s):
+            true_hits += 1
+        else:
+            false_hits += 1
+
+    true_ratio = true_hits / len(true_times) if len(true_times) > 0 else 0
+    false_ratio = false_hits / len(detected_times) if len(detected_times) > 0 else 0
+    
+    return true_ratio, false_ratio
 
 # Get crossing intervals
 def get_crossing_intervals(signal, fs, threshold=0.0):
@@ -71,7 +87,7 @@ def get_crossing_intervals(signal, fs, threshold=0.0):
 # Main Code
 
 # Load the ECG file
-data = sio.loadmat(r"Part1\Data\ecg_data.mat")
+data = sio.loadmat(r"Data/ecg_data.mat")
 
 # Extract the ECG signal and sampling frequency and flatten the arrays
 ecg = data['s'].flatten()
