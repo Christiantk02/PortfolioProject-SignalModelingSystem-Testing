@@ -37,4 +37,6 @@ def filter_pipeline(x, fs, hp_cut=0.5, bs_low=49, bs_high=51, lp_cut=35, N=101):
     h_lp = lowpass_fir(lp_cut, fs, N)
     x_clean = np.convolve(x_bs, h_lp, mode='same')
 
+    print(f"h_hp: {h_hp}, h_bs {h_bs}, h_lp: {h_lp}")
+
     return x_clean

@@ -35,7 +35,7 @@ cleaned_crossings = np.array(p1.get_crossings(ecg_cleaned, fs, threshold=thresho
 # Print results for each signal
 print("Original ECG Signal:")
 print(f"Original Crossings: {np.round(original_crossings, 3)}")
-print(f"Number of original crosisngs:  {len(original_crossings)}")
+print(f"Number of original crossings:  {len(original_crossings)}")
 
 print("\nNoisy ECG Signal:")
 print(f"Noisy Crossings: {np.round(noisy_crossings, 3)}")
